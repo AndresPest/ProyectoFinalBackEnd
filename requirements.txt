@@ -22,4 +22,5 @@ mediapipe
 opencv-python
 numpy
 Pillow
+gunicorn
 tensorflow~=2.10.1
