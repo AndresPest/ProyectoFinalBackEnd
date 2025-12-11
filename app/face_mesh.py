@@ -5,6 +5,8 @@ from app.utils import preparar_desde_base64
 
 api_emociones = Blueprint('api_emocion', __name__, url_prefix='/api')
 modelo_emociones = load_model('app/modeloOptimo.h5')
+
+# Lista de clases en el mismo orden que la salida del modelo
 clases = ['angry', 'disgust', 'fear', 'happy', 'neutral', 'sad', 'surprise']
 
 @api_emociones.route('/emocion', methods=['POST'])
@@ -19,9 +21,19 @@ def detectar_emocion():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+    # Predicciones del modelo (vector de probabilidades)
     pred = modelo_emociones.predict(entrada)[0]
-    idx = np.argmax(pred)
+
+    # Índice de la emoción principal
+    idx = int(np.argmax(pred))
     emocion = clases[idx]
     confianza = float(pred[idx])
 
-    return jsonify({'emocion': emocion, 'confianza': confianza})
+    # Convertir todas las probabilidades a porcentajes
+    porcentajes = {clase: round(float(prob) * 100, 2) for clase, prob in zip(clases, pred)}
+
+    return jsonify({
+        'emocion': emocion,
+        'confianza': round(confianza * 100, 2),
+        'porcentajes': porcentajes
+    })
