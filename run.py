@@ -12,8 +12,8 @@ app = Flask(__name__)
 #CORS(app, resources={r"/*": {"origins": "http://localhost:4200"}})
 
 # Esto permite que tu frontend de Firebase hable con el backend
-CORS(app, resources={r"/*": {"origins": "https://emociones-2beb4.web.app"}})
-
+#CORS(app, resources={r"/*": {"origins": "https://emociones-2beb4.web.app"}})
+CORS(app, resources={r"/*": {"origins": "*"}})
 app.register_blueprint(api_emociones)
 app.register_blueprint(api_login)
 app.register_blueprint(api_estrescuestionario)
