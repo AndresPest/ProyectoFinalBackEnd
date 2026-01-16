@@ -4,6 +4,7 @@ import numpy as np
 from app.utils import preparar_desde_base64
 
 api_emociones = Blueprint('api_emocion', __name__, url_prefix='/api')
+
 modelo_emociones = load_model('app/modeloOptimo.h5')
 
 # Lista de clases en el mismo orden que la salida del modelo
