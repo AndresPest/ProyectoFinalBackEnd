@@ -23,3 +23,6 @@ opencv-python
 numpy
 Pillow
 tensorflow~=2.10.1
+
+firebase-admin
+gunicorn

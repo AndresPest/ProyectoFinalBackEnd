@@ -8,7 +8,10 @@ from app.gradcam_api import api_gradcam
 app = Flask(__name__)
 
 # Permitir CORS específicamente desde Angular
-CORS(app, resources={r"/*": {"origins": "http://localhost:4200"}})
+#CORS(app, resources={r"/*": {"origins": "http://localhost:4200"}})
+
+# Esto permite que tu frontend de Firebase hable con el backend
+CORS(app, resources={r"/*": {"origins": "https://emociones-2beb4.web.app"}})
 
 app.register_blueprint(api_emociones)
 app.register_blueprint(api_login)
