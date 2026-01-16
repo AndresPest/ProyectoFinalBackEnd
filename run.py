@@ -4,7 +4,7 @@ from app.login.login import api_login
 from app.face_mesh import api_emociones
 from app.estres_cuestionario.estres_cuestionario import api_estrescuestionario
 from app.gradcam_api import api_gradcam
-import os
+
 
 app = Flask(__name__)
 
@@ -12,8 +12,8 @@ app = Flask(__name__)
 #CORS(app, resources={r"/*": {"origins": "http://localhost:4200"}})
 
 # Esto permite que tu frontend de Firebase hable con el backend
-#CORS(app, resources={r"/*": {"origins": "https://emociones-2beb4.web.app"}})
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": "https://emociones-2beb4.web.app"}})
+
 app.register_blueprint(api_emociones)
 app.register_blueprint(api_login)
 app.register_blueprint(api_estrescuestionario)
