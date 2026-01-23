@@ -6,6 +6,7 @@ from app.estres_cuestionario.estres_cuestionario import api_estrescuestionario
 from app.gradcam_api import api_gradcam
 import os
 
+
 app = Flask(__name__)
 
 # Permitir CORS específicamente desde Angular
