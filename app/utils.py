@@ -6,8 +6,7 @@ from PIL import Image
 
 def preparar_desde_base64(imagen_b64):
     # Decodificar imagen base64
-    if "," in imagen_b64:
-        imagen_b64 = imagen_b64.split(",")[1]
+
     imagen_bytes = base64.b64decode(imagen_b64)
     imagen_pil = Image.open(BytesIO(imagen_bytes)).convert('RGB')
     imagen_np = np.array(imagen_pil)
