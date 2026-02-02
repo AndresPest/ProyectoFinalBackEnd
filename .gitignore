@@ -1,0 +1,41 @@
+# Entornos virtuales
+.venv/
+venv/
+ENV/
+
+# Archivos de Python compilados
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Archivos de logs
+*.log
+
+# Configuración de IDEs
+.idea/
+.vscode/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Modelos pesados (ejemplo: Keras/TensorFlow)
+*.h5
+*.hdf5
+
+# Archivos de configuración local
+.env
+*.local
+
+# Archivos de coverage/testing
+.coverage
+htmlcov/
+.tox/
+nosetests.xml
+coverage.xml
+
+# Archivos de build/distribución
+build/
+dist/
+*.egg-info/
