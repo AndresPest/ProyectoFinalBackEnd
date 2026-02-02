@@ -4,16 +4,24 @@ from app.login.login import api_login
 from app.face_mesh import api_emociones
 from app.estres_cuestionario.estres_cuestionario import api_estrescuestionario
 from app.gradcam_api import api_gradcam
+import os
+
 
 app = Flask(__name__)
 
 # Permitir CORS específicamente desde Angular
-CORS(app, resources={r"/*": {"origins": "http://localhost:4200"}})
+#CORS(app, resources={r"/*": {"origins": "http://localhost:4200"}})
 
+# Esto permite que tu frontend de Firebase hable con el backend
+#CORS(app, resources={r"/*": {"origins": "https://emociones-2beb4.web.app"}})
+CORS(app, resources={r"/*": {"origins": "*"}})
 app.register_blueprint(api_emociones)
 app.register_blueprint(api_login)
 app.register_blueprint(api_estrescuestionario)
 app.register_blueprint(api_gradcam)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Render usa la variable de entorno PORT
+    port = int(os.environ.get("PORT", 5000))
+    # '0.0.0.0' es vital para que sea accesible desde internet
+    app.run(host='0.0.0.0', port=port)

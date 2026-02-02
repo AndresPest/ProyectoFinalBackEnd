@@ -19,8 +19,10 @@ importlib-metadata~=8.7.0
 platformdirs~=4.2.2
 flask-cors~=6.0.1
 mediapipe
-opencv-python
+opencv-python-headless
 numpy
 Pillow
+tensorflow
+
+firebase-admin
 gunicorn
-tensorflow~=2.10.1

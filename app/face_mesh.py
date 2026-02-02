@@ -1,10 +1,22 @@
 from flask import Blueprint, request, jsonify
-from tensorflow.keras.models import load_model
+import tensorflow as tf
+import os
 import numpy as np
 from app.utils import preparar_desde_base64
 
 api_emociones = Blueprint('api_emocion', __name__, url_prefix='/api')
-modelo_emociones = load_model('app/modeloOptimo.h5')
+
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # Bloquea logs pesados
+
+# Forzar a usar solo 1 hilo de CPU y nada de memoria extra
+tf.config.threading.set_intra_op_parallelism_threads(1)
+tf.config.threading.set_inter_op_parallelism_threads(1)
+tf.config.set_visible_devices([], 'GPU')
+
+# Carga el modelo con una opción para ahorrar RAM
+modelo_emociones = tf.keras.models.load_model('app/modeloOptimo.h5', compile=False)
+
 
 # Lista de clases en el mismo orden que la salida del modelo
 clases = ['angry', 'disgust', 'fear', 'happy', 'neutral', 'sad', 'surprise']
