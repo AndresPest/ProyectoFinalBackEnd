@@ -82,7 +82,7 @@ reduce_lr = ReduceLROnPlateau(
 )
 
 checkpoint = ModelCheckpoint(
-    filepath='mejor_modelo.h5',
+    filepath='audio_55.944.h5',
     monitor='val_accuracy',
     mode='max',
     save_best_only=True,

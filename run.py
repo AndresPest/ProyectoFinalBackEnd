@@ -6,6 +6,8 @@ from app.estres_cuestionario.estres_cuestionario import api_estrescuestionario
 from app.gradcam_api import api_gradcam
 import os
 
+from app.audio_reconocimiento.audio_reconocimiento import api_audio_reconocimiento
+
 
 app = Flask(__name__)
 
@@ -19,6 +21,7 @@ app.register_blueprint(api_emociones)
 app.register_blueprint(api_login)
 app.register_blueprint(api_estrescuestionario)
 app.register_blueprint(api_gradcam)
+app.register_blueprint(api_audio_reconocimiento)
 
 if __name__ == '__main__':
     # Render usa la variable de entorno PORT

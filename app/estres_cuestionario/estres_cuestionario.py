@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify, Blueprint
-from flask_cors import CORS
 
 api_estrescuestionario = Blueprint('api_estrescuestionario', __name__, url_prefix='/api')
 
