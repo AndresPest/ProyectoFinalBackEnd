@@ -1,6 +1,4 @@
 import tensorflow as tf
-
-
 import os
 
 # Configuración para que TensorFlow use el mínimo de memoria posible

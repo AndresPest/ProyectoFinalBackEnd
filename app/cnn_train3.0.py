@@ -170,36 +170,6 @@ modeloCNN2_AD.compile(optimizer= Adam(lr=0.001),
                     loss='sparse_categorical_crossentropy',
                     metrics=['accuracy'])
 
-############# ENTRENAMIENTO
-
-"""modeloDenso_AD.fit(X, Y, epochs=100, batch_size=32,
-                validation_split=0.15,
-                callbacks=[tensorboard, reduce_lr, checkpoint])"""
-
-"""modeloCNN1_AD.fit(X, Y, epochs=100, batch_size=32,
-                validation_split=0.15,
-                callbacks=[tensorboard, reduce_lr, checkpoint])"""
-
-"""modeloCNN2_AD.fit(X, Y, epochs=100, batch_size=32,
-                validation_split=0.15,
-                callbacks=[tensorboard, reduce_lr, checkpoint])"""
-
-############# ENTRENAMIENTO CON DATOS AUMENTADOS (AD)
-
-"""modeloDenso_AD.fit(datagen_entrenamiento,
-                   epochs=100, batch_size=32,
-                   validation_data = (X_validacion, Y_validacion),
-                   steps_per_epoch=int(np.ceil(len(X_entrenamiento) / float(32))),
-                   validation_steps=int(np.ceil(len(X_validacion) / float(32))),
-                   callbacks=[tensorboard, reduce_lr, checkpoint])"""
-
-"""modeloCNN1_AD.fit(datagen_entrenamiento,
-                   epochs=100, batch_size=32,
-                   validation_data = (X_validacion, Y_validacion),
-                   steps_per_epoch=int(np.ceil(len(X_entrenamiento) / float(32))),
-                   validation_steps=int(np.ceil(len(X_validacion) / float(32))),
-                   callbacks=[tensorboard, reduce_lr, checkpoint])"""
-
 modeloCNN2_AD.fit(datagen_entrenamiento,
                    epochs=10, batch_size=16,
                    validation_data = (X_validacion, Y_validacion),
