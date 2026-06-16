@@ -4,11 +4,10 @@ import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 
-# Ruta del modelo y carpeta de prueba
 RUTA_MODELO = 'modelo_100E_emociones_CNN2_AD.h5'
 DIRECTORIO = 'logs'
-IMG_SIZE = (48, 48)  # Ajusta según tu modelo
-COLOR_MODE = 'grayscale'  # Usa 'rgb' si tu modelo acepta 3 canales
+IMG_SIZE = (48, 48)
+COLOR_MODE = 'grayscale'
 
 # Cargar modelo
 modelo = load_model(RUTA_MODELO)

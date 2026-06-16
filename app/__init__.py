@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
-"""from app.face_mesh import face_mesh_api"""
-from app.face_mesh import api_emociones
+"""from app.api_facemesh import face_mesh_api"""
+from app.api_facemesh import api_emociones
 
 def crear_app():
     app = Flask(__name__)

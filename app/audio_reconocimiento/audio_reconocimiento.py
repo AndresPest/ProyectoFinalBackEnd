@@ -1,40 +1,32 @@
-from flask import Flask, request, jsonify, Blueprint
-from fastapi import FastAPI, UploadFile, File
-import soundfile as sf
+from flask import request, jsonify, Blueprint
 import io
-from .audio_reconocimiento_model import load_model, get_classes
-from .audio_reconocimiento_utils import extract_mel
 import tensorflow as tf
 import numpy as np
 import librosa
 import joblib
-import os
 
 api_audio_reconocimiento = Blueprint('api_audio_reconocimiento', __name__, url_prefix='/api')
 
-MODEL_PATH = r"C:\Users\Andres\PycharmProjects\ProyectoBackend\app\audio_reconocimiento\models\modelo_6443.h5"
-scaler = joblib.load(r"C:\Users\Andres\PycharmProjects\ProyectoBackend\app\audio_reconocimiento\models\scaler6443.joblib")
+MODEL_PATH = r"C:\Users\Andres\PycharmProjects\ProyectoBackend\app\audio_reconocimiento\models\modelo_7362.h5"
+scaler = joblib.load(r"C:\Users\Andres\PycharmProjects\ProyectoBackend\app\audio_reconocimiento\models\scaler7362.joblib")
 model = tf.keras.models.load_model(MODEL_PATH)
 
 EMOCIONES = ['angry', 'disgust', 'fear', 'happy', 'neutral', 'sad', 'surprise']
 
 
-def extract_features(audio_data, sr):
-    """
-    Sincronizado con el entrenamiento:
-    MFCC (40) + Chroma (12) + RMS (1) = 53 total
-    """
-    # 1. MFCCs (40) - DEBEN IR PRIMERO
-    mfcc = np.mean(librosa.feature.mfcc(y=audio_data, sr=sr, n_mfcc=40).T, axis=0)
+def extract_features(data, sr):
+    mfcc_full = librosa.feature.mfcc(y=data, sr=sr, n_mfcc=40)
 
-    # 2. Chroma (12) - DEBE IR DESPUÉS
-    chroma = np.mean(librosa.feature.chroma_stft(y=audio_data, sr=sr).T, axis=0)
+    mfcc = np.mean(mfcc_full.T, axis=0)
+    chroma = np.mean(librosa.feature.chroma_stft(y=data, sr=sr).T, axis=0)
+    rms = np.mean(librosa.feature.rms(y=data).T, axis=0)
 
-    # 3. RMS (1) - DEBE IR AL FINAL (En entrenamiento usaste RMS, no ZCR)
-    rms = np.mean(librosa.feature.rms(y=audio_data).T, axis=0)
+    delta_mfcc = np.mean(librosa.feature.delta(mfcc_full).T, axis=0)
+    delta2_mfcc = np.mean(librosa.feature.delta(mfcc_full, order=2).T, axis=0)
 
-    # Combinar en el orden exacto: (40, 12, 1)
-    return np.hstack((mfcc, chroma, rms))
+    arreglo_completo = np.hstack((mfcc, chroma, rms, delta_mfcc, delta2_mfcc))
+
+    return arreglo_completo
 
 def extract_mfcc(file_path):
     y, sr = librosa.load(file_path, duration=3, offset=0.5)
@@ -52,36 +44,57 @@ def predict():
 
         file = request.files['file']
 
-        # 1. Cargar el audio
         audio_data, sr = librosa.load(io.BytesIO(file.read()), sr=22050)
         audio_data = librosa.util.normalize(audio_data)
 
-        # 2. Extraer características (Asegúrate de que esta función devuelva un array de 53)
-        features = extract_features(audio_data, sr)
+        duracion_total = librosa.get_duration(y=audio_data, sr=sr)
 
-        # 3. Escalar los datos (Pasa de 1D a 2D para el scaler)
-        features_scaled = scaler.transform(features.reshape(1, -1))
+        intervalos_sonido = librosa.effects.split(audio_data, top_db=30)
+        duracion_sonido = sum([(fin - inicio) / sr for inicio, fin in intervalos_sonido])
 
-        # 4. Crear 'features_final' para la CNN (Añadir dimensión de canal)
-        # Aquí es donde se resuelve el error 'Unresolved reference'
-        features_final = np.expand_dims(features_scaled, axis=2)
+        if duracion_total > 0:
+            porcentaje_silencio = 100 - ((duracion_sonido / duracion_total) * 100)
+        else:
+            porcentaje_silencio = 0
 
-        # 5. Realizar la predicción
-        prediction = model.predict(features_final)
-        idx = np.argmax(prediction)
+        chunk_length = 3 * sr
+        predicciones_chunks = []
 
-        # Lista de emociones en el orden exacto de tu entrenamiento
+        if len(audio_data) < chunk_length:
+            chunks = [audio_data]
+        else:
+            chunks = [audio_data[i:i + chunk_length] for i in range(0, len(audio_data), chunk_length)]
+
+            if len(chunks[-1]) < sr:
+                chunks.pop()
+
+        for chunk in chunks:
+            features = extract_features(chunk, sr)
+            features_scaled = scaler.transform(features.reshape(1, -1))
+            features_final = np.expand_dims(features_scaled, axis=2)
+
+            pred_probs = model.predict(features_final)[0]
+            predicciones_chunks.append(pred_probs)
+
+        probabilidades_promedio = np.mean(predicciones_chunks, axis=0)
+        idx = np.argmax(probabilidades_promedio)
+
         EMOCIONES = ['angry', 'disgust', 'fear', 'happy', 'neutral', 'sad', 'surprise']
 
-        # 6. Devolver el JSON completo para que Angular dibuje las barras
         return jsonify({
             "label": EMOCIONES[idx],
-            "confidence": float(prediction[0][idx]),
-            "probs": prediction[0].tolist(),  # Importante: convertir a lista
-            "classes": EMOCIONES
+            "confidence": float(probabilidades_promedio[idx]),
+            "probs": probabilidades_promedio.tolist(),
+            "classes": EMOCIONES,
+            "analisis_extra": {
+                "duracion_segundos": round(duracion_total, 2),
+                "porcentaje_silencio": round(porcentaje_silencio, 2),
+                "cantidad_pausas": len(intervalos_sonido) - 1,
+                "chunks_analizados": len(chunks)
+            }
         })
 
     except Exception as e:
         import traceback
-        traceback.print_exc()  # Esto te dirá en consola si falta algo más
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500

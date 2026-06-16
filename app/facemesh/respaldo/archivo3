@@ -1,0 +1,162 @@
+import { Component, ElementRef, ViewChild, AfterViewInit, inject, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { trigger, transition, style, animate } from '@angular/animations';
+import { RouterModule } from '@angular/router';
+import { NavbarComponent } from '../navbar/navbar';
+import { FaceMesh } from '@mediapipe/face_mesh';
+import * as mp_face_mesh from '@mediapipe/face_mesh';
+import { Camera } from '@mediapipe/camera_utils';
+import { drawConnectors } from '../utils/drawing-utils';
+import { AuthService } from '../services/auth';
+
+@Component({
+  selector: 'app-facemesh',
+  standalone: true,
+  imports: [CommonModule, HttpClientModule, RouterModule, NavbarComponent],
+  templateUrl: './facemesh.html',
+  styleUrls: ['./facemesh.scss'],
+  animations: [
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(10px)' }),
+        animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+      ])
+    ]),
+    trigger('fadeInTrigger', [
+      transition('* => *', [
+        style({ opacity: 0, transform: 'translateY(10px)' }),
+        animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+      ])
+    ])
+  ]
+})
+export class FaceMesh1Component implements AfterViewInit, OnDestroy {
+  @ViewChild('video') videoRef!: ElementRef<HTMLVideoElement>;
+  @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
+
+  private camera: Camera | null = null;
+
+  private authService = inject(AuthService);
+  private http = inject(HttpClient);
+
+  public cargando = false;
+  public resultado: any = null;
+  public mensaje: string = '';
+  public tiempo: string = '00:00';
+  private ultimosLandmarks: any = null;
+
+  //private urlAPI = 'https://crojas3-detectoremociones.hf.space/api/emocion-facemesh';
+  private urlAPI = 'http://localhost:7860/api/emocion-facemesh';
+
+  async ngAfterViewInit() {
+    const faceMesh = new FaceMesh({
+      locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+    });
+
+    faceMesh.setOptions({
+      maxNumFaces: 1,
+      refineLandmarks: true,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+
+    faceMesh.onResults(res => {
+      const canvas = this.canvasRef.nativeElement;
+      const ctx = canvas.getContext('2d')!;
+
+      if (canvas.width !== res.image.width || canvas.height !== res.image.height) {
+        canvas.width = res.image.width;
+        canvas.height = res.image.height;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(res.image, 0, 0, canvas.width, canvas.height);
+
+      if (res.multiFaceLandmarks && res.multiFaceLandmarks[0]) {
+        this.ultimosLandmarks = res.multiFaceLandmarks[0];
+        drawConnectors(ctx, this.ultimosLandmarks, mp_face_mesh.FACEMESH_TESSELATION, {
+          color: '#008000',
+          lineWidth: 1
+        });
+      }
+    });
+
+    this.camera = new Camera(this.videoRef.nativeElement, {
+      onFrame: async () => await faceMesh.send({image: this.videoRef.nativeElement}),
+      width: 1280, height: 720
+    });
+    this.camera.start();
+  }
+
+  ngOnDestroy() {
+    if (this.camera) {
+      this.camera.stop();
+      this.camera = null;
+      console.log('Cámara y procesos de FaceMesh detenidos correctamente.');
+    }
+  }
+
+  enviarImagenAlDetectorEstres() {
+    if (!this.ultimosLandmarks) {
+      this.mensaje = "No se detecta rostro";
+      return;
+    }
+
+    this.cargando = true;
+    const canvas = this.canvasRef.nativeElement;
+    const ctx = canvas.getContext('2d')!;
+
+    if (this.videoRef && this.videoRef.nativeElement) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(this.videoRef.nativeElement, 0, 0, canvas.width, canvas.height);
+    }
+
+    const imgB64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+
+    if (this.ultimosLandmarks) {
+      drawConnectors(ctx, this.ultimosLandmarks, mp_face_mesh.FACEMESH_TESSELATION, {
+        color: '#008000',
+        lineWidth: 1
+      });
+    }
+
+    const body = {
+      imagen: imgB64,
+      puntos: this.ultimosLandmarks
+    };
+
+    console.log('Enviando datos al detector de emociones...', body);
+
+    this.http.post<any>(this.urlAPI, body).subscribe({
+      next: (res) => {
+        console.log('Respuesta cruda del detector:', res);
+
+        this.resultado = res;
+
+        if (res.emocion && typeof res.emocion === 'object') {
+          this.mensaje = res.emocion.prediccion || res.emocion.label || res.emocion.emocion_dominante || JSON.stringify(res.emocion);
+
+          if (res.emocion.porcentajes) {
+            this.resultado.porcentajes = res.emocion.porcentajes;
+          }
+        } else {
+          this.mensaje = res.emocion;
+        }
+
+        this.cargando = false;
+        /*if (this.authService.currentUser) {
+          this.authService.guardarResultadoFacial(this.authService.currentUser.uid, {
+            modelo: 'FaceMesh-Landmarks',
+            emocion: this.mensaje,
+            confianza: res.confianza || res.emocion.confianza || 100
+          });
+        }*/
+      },
+      error: () => {
+        this.cargando = false;
+        this.mensaje = 'Error de conexión con la API';
+      }
+    });
+  }
+}

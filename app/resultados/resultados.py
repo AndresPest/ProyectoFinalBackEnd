@@ -126,18 +126,18 @@ def recibir_cuestionario():
             if categoria == "Nivel General":
                 continue
 
-            if categoria in ["Estresores", "Sintomas"]:
+            if categoria in ["Estresores", "Síntomas"]:
                 if 2.5 <= valor <= 3.6:
                     categoriasResaltantes.append(categoria)
                 elif 3.7 <= valor <= 5.0:
                     categoriasAtencion.append(categoria)
             elif categoria == "Afrontamiento":
-                if 1.0 <= valor <= 2.4:
+                if valor <= 2.4:
                     categoriasAtencion.append(categoria)
                 elif 2.5 <= valor <= 3.4:
                     categoriasResaltantes.append(categoria)
 
-        puntajeTotal = categorias.get("Estresores", 0) + categorias.get("Sintomas", 0) + categorias.get("Afrontamiento", 0)
+        puntajeTotal = categorias.get("Estresores", 0) + categorias.get("Síntomas", 0) + categorias.get("Afrontamiento", 0)
         puntajeMedia = float("{:.1f}".format(puntajeTotal / 21))
 
         resultado_final = {
