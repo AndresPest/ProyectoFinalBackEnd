@@ -14,6 +14,8 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint
 from sklearn.metrics import confusion_matrix
 from tensorflow.keras.optimizers.legacy import Adam
+from sklearn.metrics import roc_curve, auc
+from itertools import cycle
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -138,16 +140,56 @@ history = model.fit(
 )
 
 y_pred = model.predict(x_test)
+
+# Etiquetas discretas (para la matriz de confusión)
 y_pred_labels = np.argmax(y_pred, axis=1)
 y_actual_labels = np.argmax(y_test, axis=1)
+nombres_clases = enc.categories_[0]
 
+# 1. Matriz de Confusión
 cm = confusion_matrix(y_actual_labels, y_pred_labels)
-plt.figure(figsize=(12, 10))
+plt.figure(figsize=(10, 8))
 sns.heatmap(cm, annot=True, fmt='d',
-            xticklabels=enc.categories_[0],
-            yticklabels=enc.categories_[0],
+            xticklabels=nombres_clases,
+            yticklabels=nombres_clases,
             cmap='Blues')
-plt.xlabel('Predicción')
-plt.ylabel('Realidad')
-plt.title('Matriz de Confusión - Dataset Unificado')
+plt.xlabel('Predicción del Modelo')
+plt.ylabel('Etiqueta Real')
+plt.title('Matriz de Confusión')
+plt.show()
+
+# 2. Curvas ROC y AUC (Multiclase)
+n_classes = y_test.shape[1]
+
+# Diccionarios para guardar los valores por cada clase
+fpr = dict()
+tpr = dict()
+roc_auc = dict()
+
+# Calcular ROC y AUC para cada clase individualmente
+for i in range(n_classes):
+    # Comparamos la clase 'i' real vs la probabilidad predicha para la clase 'i'
+    fpr[i], tpr[i], _ = roc_curve(y_test[:, i], y_pred[:, i])
+    roc_auc[i] = auc(fpr[i], tpr[i])
+
+# Configurar el gráfico de la curva ROC
+plt.figure(figsize=(12, 8))
+colors = cycle(['blue', 'red', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow', 'brown', 'pink'])
+
+# Graficar la curva de cada clase
+for i, color in zip(range(n_classes), colors):
+    plt.plot(fpr[i], tpr[i], color=color, lw=2,
+             label=f'ROC {nombres_clases[i]} (AUC = {roc_auc[i]:.2f})')
+
+# Línea de referencia de modelo aleatorio (diagonal)
+plt.plot([0, 1], [0, 1], 'k--', lw=2, label='Azar')
+
+# Formato del gráfico
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('Tasa de Falsos Positivos (FPR)')
+plt.ylabel('Tasa de Verdaderos Positivos (TPR)')
+plt.title('Curva ROC por Emoción')
+plt.legend(loc="lower right")
+plt.grid(alpha=0.3)
 plt.show()

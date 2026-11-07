@@ -110,12 +110,8 @@ def recibir_cuestionario():
 
         if puntaje_general >= 2 and puntaje_general <= 3:
             categoriasResaltantes.append("Nivel General")
-            nivel_estres = "Estrés Moderado"
         elif puntaje_general >= 4 and puntaje_general <= 5:
             categoriasAtencion.append("Nivel General")
-            nivel_estres = "Estrés Alto"
-        else:
-            nivel_estres = "Estrés Leve"
 
         for categoria, puntajeTotal in categorias.items():
             n_preguntas = nPreguntasCategoria.get(categoria, 7)
@@ -139,6 +135,13 @@ def recibir_cuestionario():
 
         puntajeTotal = categorias.get("Estresores", 0) + categorias.get("Síntomas", 0) + categorias.get("Afrontamiento", 0)
         puntajeMedia = float("{:.1f}".format(puntajeTotal / 21))
+
+        if (puntajeMedia <= 2.3):
+            nivel_estres = "Estrés Leve"
+        elif (puntajeMedia >= 2.4 and puntajeMedia <= 3.6):
+            nivel_estres = "Estrés Moderado"
+        elif (puntajeMedia >= 3.7):
+            nivel_estres = "Estrés Alto"
 
         resultado_final = {
             "identificador": "SISCO - Inventario Sistémico Cognoscitivista para el estudio del estrés académico",
